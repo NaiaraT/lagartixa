@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Joguinho da Lagartixa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,27 +14,31 @@
             align-items: center;
             flex-direction: column;
             height: 100vh;
-            background-color: #87CEEB; /* Sky blue */
+            background: linear-gradient(to bottom, #87CEEB, #B0E0E6); /* Sky gradient */
             margin: 0;
-            font-family: 'Press Start 2P', cursive;
+            font-family: 'Press Start 2P',-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif;
             color: #333;
             overflow: hidden;
+            position: relative;
         }
         h1 {
             color: #fff;
-            text-shadow: 2px 2px 4px #000000;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
             text-align: center;
+            z-index: 10;
+            font-size: 1.5em;
         }
         #gameContainer {
             position: relative;
-            border: 8px solid #D2B48C; /* Tan border */
+            border: 8px solid #A0522D; /* Sienna border */
+            border-bottom-width: 12px;
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            z-index: 10;
         }
         canvas {
             display: block;
-            background-color: #f0f0f0;
         }
         #winMessage {
             position: absolute;
@@ -48,36 +52,88 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            font-size: 1.5em; /* Adjusted for better fit */
+            font-size: 1.5em; 
             flex-direction: column;
             padding: 20px;
+            text-shadow: 2px 2px 4px #000;
         }
         #winMessage button {
-            margin-top: 20px;
+            margin-top: 25px;
             padding: 15px 30px;
-            font-family: 'Press Start 2P', cursive;
+            font-family: inherit;
             font-size: 0.5em;
-            background-color: #4CAF50; /* Green */
+            background: #FF69B4; /* Hot Pink */
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             text-transform: uppercase;
+            box-shadow: 0 5px 0 #C71585; /* Medium Violet Red shadow */
+            transition: all 0.1s ease-in-out;
         }
-        #winMessage button:hover {
-            background-color: #45a049;
+        #winMessage button:hover { transform: translateY(2px); box-shadow: 0 3px 0 #C71585; }
+        #winMessage button:active { transform: translateY(5px); box-shadow: 0 0px 0 #C71585; }
+        
+        #controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #555;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 4px #bbb;
+        }
+        .control-btn:active { transform: translateY(4px); box-shadow: 0 0 #bbb; }
+
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 100px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .cloud:before, .cloud:after { content: ''; position: absolute; background: #fff; width: 100px; height: 100px; border-radius: 50%; }
+        .cloud:after { width: 120px; height: 120px; top: -55px; left: 30px; }
+        .cloud:before { width: 90px; height: 90px; top: -45px; right: 20px; }
+        .cloud1 { top: 20%; left: 10%; width: 150px; height: 50px; animation: move-clouds 120s linear infinite; }
+        .cloud2 { top: 40%; left: 70%; width: 100px; height: 30px; animation: move-clouds 90s linear infinite; }
+        .cloud3 { top: 15%; left: 50%; width: 120px; height: 40px; animation: move-clouds 150s linear infinite; }
+
+        @keyframes move-clouds {
+            0% { transform: translateX(-200px); }
+            100% { transform: translateX(calc(100vw + 200px)); }
         }
     </style>
 </head>
 <body>
+    <div class="cloud cloud1"></div>
+    <div class="cloud cloud2"></div>
+    <div class="cloud cloud3"></div>
 
-    <h1>Desafio da lagartixa:pegue o macarrão</h1>
+    <h1>A Aventura da Lagartixa</h1>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="400"></canvas>
         <div id="winMessage">
             <p>Feliz dia dos namorados, minha lagartixa! ❤️</p>
             <button onclick="restartGame()">Jogar de Novo</button>
         </div>
+    </div>
+    <div id="controls">
+        <div class="control-btn" id="left-btn">⬅️</div>
+        <div class="control-btn" id="jump-btn">⬆️</div>
+        <div class="control-btn" id="right-btn">➡️</div>
     </div>
 
     <script>
@@ -91,130 +147,214 @@
         const LIZARD_SPEED = 5;
 
         // --- Game Objects ---
-        // Player (Lizard)
-        const lizard = {
-            x: 50,
-            y: canvas.height - 90,
-            width: 50,
-            height: 50,
-            dx: 0,
-            dy: 0,
-            onGround: false,
-            emoji: '🦎',
-            direction: -1 // Start facing right. -1 for right, 1 for left.
-        };
-
-        // Goal (Pasta)
-        const pasta = {
-            x: canvas.width - 100,
-            y: canvas.height - 90,
-            width: 50,
-            height: 50,
-            emoji: '🍝'
-        };
-
-        // Obstacles and Platforms
+        const lizard = { x: 50, y: canvas.height - 90, width: 50, height: 50, dx: 0, dy: 0, onGround: false, emoji: '🦎', direction: -1 };
+        const pasta = { x: canvas.width - 110, y: canvas.height - 105, width: 80, height: 65 };
         const platforms = [
-            // Ground
-            { x: 0, y: canvas.height - 40, width: canvas.width, height: 40, color: '#228B22' },
-            // Floating platforms
+            { x: 0, y: canvas.height - 40, width: canvas.width, height: 40, color: '#2E8B57' },
             { x: 150, y: 280, width: 100, height: 20, color: '#D2691E' },
             { x: 320, y: 220, width: 100, height: 20, color: '#D2691E' },
             { x: 500, y: 160, width: 100, height: 20, color: '#D2691E' },
             { x: 650, y: 280, width: 80, height: 20, color: '#D2691E' },
-            // Obstacles (Cacti)
-            { x: 250, y: canvas.height - 90, width: 30, height: 50, emoji: '🌵' },
-            { x: 420, y: canvas.height - 90, width: 30, height: 50, emoji: '🌵' },
-            { x: 530, y: 110, width: 30, height: 50, emoji: '🌵' }, // Cactus on a platform
+            // Obstacles
+            { x: 250, y: canvas.height - 90, width: 50, height: 30, isObstacle: true, type: 'money', vy: 1, originalY: canvas.height - 90 },
+            { x: 420, y: canvas.height - 120, width: 50, height: 20, isObstacle: true, type: 'dumbbell', vy: -1, originalY: canvas.height - 120 },
+            { x: 530, y: 110, width: 50, height: 30, isObstacle: true, type: 'money', vy: 1, originalY: 110 },
         ];
         
+        let winHearts = [];
+        let collisionMessage = null;
+
         // --- Input Handling ---
-        const keys = {
-            right: false,
-            left: false,
-            up: false
+        const keys = { right: false, left: false, up: false };
+        const setupKeyListener = (targetId, state) => (e) => {
+            if (e.code === 'ArrowRight' || targetId === 'right-btn') keys.right = state;
+            if (e.code === 'ArrowLeft' || targetId === 'left-btn') keys.left = state;
+            if (e.code === 'Space' || e.code === 'ArrowUp' || targetId === 'jump-btn') keys.up = state;
         };
 
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'ArrowRight') keys.right = true;
-            if (e.code === 'ArrowLeft') keys.left = true;
-            if (e.code === 'Space' || e.code === 'ArrowUp') keys.up = true;
+        document.addEventListener('keydown', setupKeyListener(null, true));
+        document.addEventListener('keyup', setupKeyListener(null, false));
+
+        ['left-btn', 'right-btn', 'jump-btn'].forEach(id => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('mousedown', () => setupKeyListener(id, true)({}));
+            btn.addEventListener('mouseup', () => setupKeyListener(id, false)({}));
+            btn.addEventListener('mouseleave', () => setupKeyListener(id, false)({}));
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); setupKeyListener(id, true)({}); }, { passive: false });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); setupKeyListener(id, false)({}); });
         });
 
-        document.addEventListener('keyup', (e) => {
-            if (e.code === 'ArrowRight') keys.right = false;
-            if (e.code === 'ArrowLeft') keys.left = false;
-            if (e.code === 'Space' || e.code === 'ArrowUp') keys.up = false;
-        });
-        
         // --- Drawing Functions ---
         function drawLizard() {
-            ctx.save(); // Save the current canvas state
+            ctx.save();
             const lizardCenterX = lizard.x + lizard.width / 2;
             ctx.translate(lizardCenterX, 0);
-            ctx.scale(lizard.direction, 1); // Flip based on direction
-
-            // Draw Hair
-            ctx.fillStyle = '#000000'; // Black for hair
+            ctx.scale(lizard.direction, 1);
+            ctx.fillStyle = '#000000';
             ctx.beginPath();
             const hairX = -lizard.width / 2 + 10;
             const hairY = lizard.y + 10;
             ctx.moveTo(hairX, hairY);
             ctx.bezierCurveTo(hairX - 10, hairY - 20, hairX + 30, hairY - 20, hairX + 20, hairY + 15);
             ctx.fill();
-            
-            // Draw Lizard Emoji
             ctx.font = '48px serif';
             ctx.fillText(lizard.emoji, -lizard.width / 2, lizard.y + lizard.height);
-            
-            ctx.restore(); // Restore the canvas to its original state
+            ctx.restore();
         }
 
         function drawPasta() {
-            ctx.font = '48px serif';
-            ctx.fillText(pasta.emoji, pasta.x, pasta.y + pasta.height);
+            const pX = pasta.x;
+            const pY = pasta.y;
+            
+            // Plate
+            ctx.fillStyle = '#dc3545'; // Red plate
+            ctx.strokeStyle = '#a42631';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(pX + pasta.width / 2, pY + pasta.height - 10, pasta.width / 2, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Spaghetti mound
+            ctx.strokeStyle = '#f8b400';
+            ctx.lineWidth = 3;
+            for(let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                const startX = pX + 10 + Math.random() * (pasta.width - 20);
+                const startY = pY + 20 + Math.random() * (pasta.height - 30);
+                const endX = pX + 10 + Math.random() * (pasta.width - 20);
+                const endY = pY + 20 + Math.random() * (pasta.height - 30);
+                const cp1X = startX + (Math.random() - 0.5) * 40;
+                const cp1Y = startY + (Math.random() - 0.5) * 40;
+                ctx.moveTo(startX, startY);
+                ctx.quadraticCurveTo(cp1X, cp1Y, endX, endY);
+                ctx.stroke();
+            }
+
+            // Flecks of seasoning
+            for(let i=0; i<10; i++){
+                ctx.fillStyle = '#c0392b'; // Red flecks
+                ctx.fillRect(pX + 15 + Math.random() * (pasta.width - 30), pY + 25 + Math.random() * (pasta.height - 40), 3, 3);
+                ctx.fillStyle = '#27ae60'; // Green flecks
+                ctx.fillRect(pX + 15 + Math.random() * (pasta.width - 30), pY + 25 + Math.random() * (pasta.height - 40), 2, 2);
+            }
+
+            // Fork
+            ctx.save();
+            ctx.translate(pX + pasta.width - 15, pY + 15);
+            ctx.rotate(0.5); // Tilt the fork
+            ctx.fillStyle = '#d3d3d3'; // Light grey
+            ctx.strokeStyle = '#808080';
+            ctx.lineWidth = 1;
+            // Handle
+            ctx.fillRect(-60, -5, 60, 10);
+            ctx.strokeRect(-60, -5, 60, 10);
+            // Head
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(15, -12);
+            ctx.lineTo(15, 12);
+            ctx.lineTo(0, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // Tines
+            for(let i=0; i<4; i++) {
+                ctx.fillRect(15, -10 + i * 6, 10, 2);
+                ctx.strokeRect(15, -10 + i * 6, 10, 2);
+            }
+            ctx.restore();
         }
 
-        function drawPlatforms() {
-            platforms.forEach(platform => {
-                if(platform.color) {
-                    ctx.fillStyle = platform.color;
-                    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-                }
-                if(platform.emoji) {
-                    ctx.font = '48px serif';
-                    ctx.fillText(platform.emoji, platform.x, platform.y + platform.height);
+        function drawDumbbell(x, y, w, h) {
+            ctx.fillStyle = '#4a4a4a';
+            const barHeight = 8;
+            const barY = y + h/2 - barHeight/2;
+            ctx.fillRect(x, barY, w, barHeight); // Bar
+            ctx.fillRect(x - 12, y, 12, h); // Left weight
+            ctx.fillRect(x + w, y, 12, h); // Right weight
+        }
+
+        function drawMoney(x, y, w, h) {
+            ctx.fillStyle = '#28a745';
+            ctx.strokeStyle = '#1e7e34';
+            ctx.lineWidth = 2;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('$', x + w/2, y + h/1.5);
+            ctx.textAlign = 'start';
+        }
+        
+        function drawPlatformsAndObstacles() {
+            platforms.forEach(p => {
+                if (p.isObstacle) {
+                    if (p.type === 'money') drawMoney(p.x, p.y, p.width, p.height);
+                    if (p.type === 'dumbbell') drawDumbbell(p.x, p.y, p.width, p.height);
+                } else if (p.color) {
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.width, p.height);
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    for (let i = 0; i < p.width; i += 20) {
+                        ctx.fillRect(p.x + i, p.y, 10, p.height);
+                    }
                 }
             });
+        }
+        
+        function drawScenery() {
+            const groundY = canvas.height - 40;
+            ctx.fillStyle = '#FF69B4';
+            for(let i=0; i<5; i++){
+                ctx.beginPath(); ctx.arc(100 + i * 150, groundY - 10, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#228B22"; ctx.fillRect(100 + i * 150 -1, groundY-5, 2, 5);
+                ctx.fillStyle = '#FF69B4';
+            }
+        }
+
+        function drawWinAnimation() {
+            winHearts.forEach((heart, index) => {
+                heart.size += 2; heart.opacity -= 0.02;
+                if(heart.opacity <= 0) { winHearts.splice(index, 1); }
+                ctx.font = `${heart.size}px serif`; ctx.globalAlpha = heart.opacity;
+                ctx.fillText('❤️', heart.x, heart.y); ctx.globalAlpha = 1;
+            });
+        }
+
+        function drawCollisionMessage() {
+            if (collisionMessage) {
+                ctx.fillStyle = `rgba(220, 20, 60, ${collisionMessage.opacity})`; // Crimson
+                ctx.font = '12px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText(collisionMessage.text, collisionMessage.x, collisionMessage.y);
+                ctx.textAlign = 'start';
+                collisionMessage.opacity -= 0.01;
+            }
         }
         
         // --- Game Logic Loop ---
         let animationFrameId;
 
         function updateLogic() {
-            // Horizontal movement and direction update
-            if (keys.right) {
-                lizard.x += LIZARD_SPEED;
-                lizard.direction = -1; // Face right (flip the emoji)
-            }
-            if (keys.left) {
-                lizard.x -= LIZARD_SPEED;
-                lizard.direction = 1; // Face left (default emoji direction)
-            }
-            
-            // Jumping
-            if (keys.up && lizard.onGround) {
-                lizard.dy = LIZARD_JUMP_FORCE;
-                lizard.onGround = false;
-            }
+            if (collisionMessage) return;
 
-            // Apply gravity
+            platforms.forEach(p => {
+                if (p.isObstacle) {
+                    p.y += p.vy;
+                    if (p.y < p.originalY - 20 || p.y > p.originalY + 20) p.vy *= -1;
+                }
+            });
+
+            if (keys.right) { lizard.x += LIZARD_SPEED; lizard.direction = -1; }
+            if (keys.left) { lizard.x -= LIZARD_SPEED; lizard.direction = 1; }
+            if (keys.up && lizard.onGround) { lizard.dy = LIZARD_JUMP_FORCE; lizard.onGround = false; }
+
             lizard.y += lizard.dy;
             lizard.dy += GRAVITY;
-            
             lizard.onGround = false;
 
-            // Collision detection
             platforms.forEach(platform => {
                 const isColliding = lizard.x < platform.x + platform.width &&
                                   lizard.x + lizard.width > platform.x &&
@@ -222,14 +362,19 @@
                                   lizard.y + lizard.height > platform.y;
 
                 if (isColliding) {
-                    // Obstacle collision (cactus) - resets position
-                    if (platform.emoji) {
-                        setTimeout(() => resetLizardPosition(), 50);
+                    if (platform.isObstacle && !collisionMessage) {
+                        let text = "";
+                        if (platform.type === 'money') text = "Assim você não vai aposentar!";
+                        if (platform.type === 'dumbbell') text = "Hora de malhar!";
+                        
+                        collisionMessage = { text: text, x: lizard.x + lizard.width / 2, y: lizard.y - 20, opacity: 1 };
+                        setTimeout(() => {
+                            resetLizardPosition();
+                            collisionMessage = null;
+                        }, 2000);
                         return;
                     }
-                    
-                    // Platform collision (landing on top)
-                    if (lizard.dy >= 0 && lizard.y + lizard.height - lizard.dy <= platform.y) {
+                    if (!platform.isObstacle && lizard.dy >= 0 && lizard.y + lizard.height - lizard.dy <= platform.y) {
                          lizard.dy = 0;
                          lizard.y = platform.y - lizard.height;
                          lizard.onGround = true;
@@ -237,13 +382,9 @@
                 }
             });
 
-            // Prevent falling off the canvas edges
             if (lizard.x < 0) lizard.x = 0;
-            if (lizard.x + lizard.width > canvas.width) {
-                lizard.x = canvas.width - lizard.width;
-            }
+            if (lizard.x + lizard.width > canvas.width) lizard.x = canvas.width - lizard.width;
 
-            // Check for win condition (reaching the pasta)
             if (lizard.x < pasta.x + pasta.width &&
                 lizard.x + lizard.width > pasta.x &&
                 lizard.y < pasta.y + pasta.height &&
@@ -253,10 +394,14 @@
         }
 
         function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawPlatforms();
+            ctx.fillStyle = '#f0f8ff';
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            drawScenery();
+            drawPlatformsAndObstacles();
             drawLizard();
             drawPasta();
+            drawWinAnimation();
+            drawCollisionMessage();
         }
 
         function gameLoop() {
@@ -265,9 +410,19 @@
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        // --- Game State Functions ---
         function showWinMessage() {
-            cancelAnimationFrame(animationFrameId); // Stop the game loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                 for(let i = 0; i < 10; i++){
+                    winHearts.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 20 + 10, opacity: 1 });
+                }
+                const celebrateLoop = () => {
+                    render();
+                    if(winHearts.length > 0) { requestAnimationFrame(celebrateLoop); }
+                }
+                celebrateLoop();
+            }
             winMessage.style.display = 'flex';
         }
         
@@ -275,13 +430,13 @@
              lizard.x = 50;
              lizard.y = canvas.height - 90;
              lizard.dy = 0;
-             lizard.direction = -1; // Face right when game restarts
+             lizard.direction = -1;
         }
 
         function restartGame() {
             winMessage.style.display = 'none';
-            resetLizardPosition();
-            gameLoop(); // Start the game loop again
+            resetLIZARDPosition();
+            if (!animationFrameId) gameLoop();
         }
 
         // --- Start the Game ---
